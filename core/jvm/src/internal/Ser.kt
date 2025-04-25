@@ -9,37 +9,41 @@ package kotlinx.datetime
 import java.io.*
 
 @PublishedApi // changing the class name would result in serialization incompatibility
-internal class Ser(private var typeTag: Int, private var value: Any?) : Externalizable {
-    constructor() : this(0, null)
+internal class Ser private constructor(private var value: Serializable?) : Externalizable {
+    // deserialization uses this public no-arg constructor
+    constructor() : this(null)
+
+    internal constructor(value: LocalDate) : this(value as Serializable)
+    internal constructor(value: LocalTime) : this(value as Serializable)
+    internal constructor(value: LocalDateTime) : this(value as Serializable)
+    internal constructor(value: UtcOffset) : this(value as Serializable)
 
     override fun writeExternal(out: ObjectOutput) {
-        out.writeByte(typeTag)
-        val value = this.value
-        when (typeTag) {
-            DATE_TAG -> {
-                value as LocalDate
-                out.writeLong(value.value.toEpochDay())
+        when (val value = this.value) {
+            is LocalDate -> {
+                out.writeByte(DATE_TAG.toInt())
+                out.writeLong(value.toEpochDays())
             }
-            TIME_TAG -> {
-                value as LocalTime
+            is LocalTime -> {
+                out.writeByte(TIME_TAG.toInt())
                 out.writeLong(value.toNanosecondOfDay())
             }
-            DATE_TIME_TAG -> {
-                value as LocalDateTime
-                out.writeLong(value.date.value.toEpochDay())
+            is LocalDateTime -> {
+                out.writeByte(DATE_TIME_TAG.toInt())
+                out.writeLong(value.date.toEpochDays())
                 out.writeLong(value.time.toNanosecondOfDay())
             }
-            UTC_OFFSET_TAG -> {
-                value as UtcOffset
+            is UtcOffset -> {
+                out.writeByte(UTC_OFFSET_TAG.toInt())
                 out.writeInt(value.totalSeconds)
             }
-            else -> throw IllegalStateException("Unknown type tag: $typeTag for value: $value")
+            else -> error("Unexpected value: $value")
         }
     }
 
     override fun readExternal(`in`: ObjectInput) {
-        typeTag = `in`.readByte().toInt()
-        value = when (typeTag) {
+        // TODO should kotlinx.datetime.LocalDate.fromEpochDays() be used?
+        value = when (val typeTag = `in`.readByte()) {
             DATE_TAG ->
                 LocalDate(java.time.LocalDate.ofEpochDay(`in`.readLong()))
             TIME_TAG ->
@@ -51,17 +55,18 @@ internal class Ser(private var typeTag: Int, private var value: Any?) : External
                 )
             UTC_OFFSET_TAG ->
                 UtcOffset(seconds = `in`.readInt())
-            else -> throw IOException("Unknown type tag: $typeTag")
+            else -> throw StreamCorruptedException("Unknown type tag: $typeTag")
         }
     }
 
-    private fun readResolve(): Any = value!!
+    @Throws(ObjectStreamException::class)
+    private fun readResolve(): Any = value ?: error("readResolve called before readExternal")
 
-    companion object {
+    private companion object {
         private const val serialVersionUID: Long = 0L
-        const val DATE_TAG = 2
-        const val TIME_TAG = 3
-        const val DATE_TIME_TAG = 4
-        const val UTC_OFFSET_TAG = 10
+        private const val DATE_TAG: Byte = 2
+        private const val TIME_TAG: Byte = 3
+        private const val DATE_TIME_TAG: Byte = 4
+        private const val UTC_OFFSET_TAG: Byte = 10
     }
 }

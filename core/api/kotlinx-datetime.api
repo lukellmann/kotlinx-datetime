@@ -473,18 +473,9 @@ public final class kotlinx/datetime/MonthKt {
 }
 
 public final class kotlinx/datetime/Ser : java/io/Externalizable {
-	public static final field Companion Lkotlinx/datetime/Ser$Companion;
-	public static final field DATE_TAG I
-	public static final field DATE_TIME_TAG I
-	public static final field TIME_TAG I
-	public static final field UTC_OFFSET_TAG I
 	public fun <init> ()V
-	public fun <init> (ILjava/lang/Object;)V
 	public fun readExternal (Ljava/io/ObjectInput;)V
 	public fun writeExternal (Ljava/io/ObjectOutput;)V
-}
-
-public final class kotlinx/datetime/Ser$Companion {
 }
 
 public class kotlinx/datetime/TimeZone {
