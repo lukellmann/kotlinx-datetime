@@ -39,6 +39,9 @@ public actual class UtcOffset(
         @Suppress("FunctionName")
         public actual fun Format(block: DateTimeFormatBuilder.WithUtcOffset.() -> Unit): DateTimeFormat<UtcOffset> =
             UtcOffsetFormat.build(block)
+
+        // todo copy comment from LocalDate
+        private const val serialVersionUID: Long = -6636773355667981618L
     }
 
     public actual object Formats {
@@ -47,7 +50,12 @@ public actual class UtcOffset(
         public actual val FOUR_DIGITS: DateTimeFormat<UtcOffset> get() = FOUR_DIGIT_OFFSET
     }
 
-    private fun writeReplace(): Any = Ser(Ser.UTC_OFFSET_TAG, this)
+    @Throws(java.io.IOException::class, ClassNotFoundException::class)
+    private fun readObject(ois: java.io.ObjectInputStream): Unit =
+        throw java.io.InvalidObjectException("kotlinx.datetime.UtcOffset must be deserialized via kotlinx.datetime.Ser")
+
+    @Throws(java.io.ObjectStreamException::class)
+    private fun writeReplace(): Any = Ser(this)
 }
 
 @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")

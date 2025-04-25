@@ -106,13 +106,22 @@ public actual class LocalDateTime internal constructor(
         @Suppress("FunctionName")
         public actual fun Format(builder: DateTimeFormatBuilder.WithDateTime.() -> Unit): DateTimeFormat<LocalDateTime> =
             LocalDateTimeFormat.build(builder)
+
+        // todo copy comment from LocalDate
+        private const val serialVersionUID: Long = -4261744960416354711L
     }
 
     public actual object Formats {
         public actual val ISO: DateTimeFormat<LocalDateTime> = ISO_DATETIME
     }
 
-    private fun writeReplace(): Any = Ser(Ser.DATE_TIME_TAG, this)
+    @Throws(java.io.IOException::class, ClassNotFoundException::class)
+    private fun readObject(ois: java.io.ObjectInputStream): Unit = throw java.io.InvalidObjectException(
+        "kotlinx.datetime.LocalDateTime must be deserialized via kotlinx.datetime.Ser"
+    )
+
+    @Throws(java.io.ObjectStreamException::class)
+    private fun writeReplace(): Any = Ser(this)
 }
 
 /**
